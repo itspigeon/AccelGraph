@@ -15,6 +15,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     private final static String TAG = "MainActivity";
     private final int N = 5;
+    private final static float alpha = 0.8F;
 
     private TextView rateView, accuracyView;
     private GraphView xView, yView, zView;
@@ -30,6 +31,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     private float[] accValue = new float[3];
     private float[][] storedAccValue = new float[3][N];
     private int idx = 0;
+
     private float rate;
     private int accuracy;
     private long prevts;
@@ -50,7 +52,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         accelerometer = sensorMgr.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         if (accelerometer == null) {
             Toast.makeText(this, getString(R.string.toast_no_accel_error),
-                    Toast.LENGTH_SHORT).show();
+                Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -78,6 +80,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
         smAverage(event);
+
         rate = ((float) (event.timestamp - prevts)) / (1000 * 1000);
         prevts = event.timestamp;
     }
@@ -91,6 +94,12 @@ public class MainActivity extends Activity implements SensorEventListener {
             }
             accValue[axis] = s / N;
             idx = (idx + 1) % N;
+        }
+    }
+
+    private void weightedAverage(SensorEvent event) {
+        for (int axis = 0; axis < 3; axis++) {
+            accValue[axis] = alpha * accValue[axis] + (1 - alpha) * event.values[axis];
         }
     }
 
