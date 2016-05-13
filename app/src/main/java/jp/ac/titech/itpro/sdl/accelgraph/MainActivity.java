@@ -28,9 +28,12 @@ public class MainActivity extends Activity implements SensorEventListener {
     private GraphRefreshThread th = null;
     private Handler handler;
 
-    private float[] accValue = new float[3];
+    private float[] smAccValue = new float[3];
+    private float[] wgAccValue = new float[3];
     private float[][] storedAccValue = new float[3][N];
     private int idx = 0;
+
+    private float vx, vy, vz;
 
     private float rate;
     private int accuracy;
@@ -80,6 +83,11 @@ public class MainActivity extends Activity implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
         smAverage(event);
+        weightedAverage(event);
+
+        vx = event.values[0];
+        vy = event.values[1];
+        vz = event.values[2];
 
         rate = ((float) (event.timestamp - prevts)) / (1000 * 1000);
         prevts = event.timestamp;
@@ -92,14 +100,14 @@ public class MainActivity extends Activity implements SensorEventListener {
             for (int i = 0; i < N; i++) {
                 s = s + storedAccValue[axis][i];
             }
-            accValue[axis] = s / N;
+            smAccValue[axis] = s / N;
             idx = (idx + 1) % N;
         }
     }
 
     private void weightedAverage(SensorEvent event) {
         for (int axis = 0; axis < 3; axis++) {
-            accValue[axis] = alpha * accValue[axis] + (1 - alpha) * event.values[axis];
+            wgAccValue[axis] = alpha * wgAccValue[axis] + (1 - alpha) * event.values[axis];
         }
     }
 
@@ -117,9 +125,9 @@ public class MainActivity extends Activity implements SensorEventListener {
                         public void run() {
                             rateView.setText(Float.toString(rate));
                             accuracyView.setText(Integer.toString(accuracy));
-                            xView.addData(accValue[0], true);
-                            yView.addData(accValue[1], true);
-                            zView.addData(accValue[2], true);
+                            xView.addData(vx, wgAccValue[0], smAccValue[0], true);
+                            yView.addData(vy, wgAccValue[1], smAccValue[1], true);
+                            zView.addData(vz, wgAccValue[2], smAccValue[2], true);
                         }
                     });
                     Thread.sleep(GRAPH_REFRESH_WAIT_MS);

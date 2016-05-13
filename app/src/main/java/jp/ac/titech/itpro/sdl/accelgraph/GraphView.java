@@ -13,9 +13,10 @@ public class GraphView extends View {
     private final static String TAG = "GraphView";
     private final static float Ymax = 20;
     private final static int NDATA_INIT = 256;
+    private final static int NKIND = 3;
 
     private int ndata = NDATA_INIT;
-    private float[] vs = new float[NDATA_INIT];
+    private float[][] vs = new float[NKIND][NDATA_INIT];
     private int idx = 0;
     private int x0, y0, ewidth;
     private int dw = 5, dh = 1;
@@ -45,9 +46,11 @@ public class GraphView extends View {
 
         if (y0 / Ymax >= dh + 1)
             dh = (int) (y0 / Ymax);
-        if (ndata > vs.length) {
+        if (ndata > vs[0].length) {
             idx = 0;
-            vs = new float[ndata];
+            for (int i = 0; i < NKIND; i++) {
+                vs[i] = new float[ndata];
+            }
         }
     }
 
@@ -71,20 +74,35 @@ public class GraphView extends View {
         canvas.drawLine(0, y0, ewidth, y0, paint);
 
         // graph
-        paint.setColor(Color.YELLOW);
-        paint.setStrokeWidth(2);
-        for (int i = 0; i < ndata - 1; i++) {
-            int j = (idx + i) % ndata;
-            int x1 = x0 + dw * i;
-            int x2 = x0 + dw * (i + 1);
-            int y1 = (int) (y0 + dh * vs[j]);
-            int y2 = (int) (y0 + dh * vs[(j + 1) % ndata]);
-            canvas.drawLine(x1, y1, x2, y2, paint);
+        for(int k = 0; k < NKIND; k++) {
+            switch(k) {
+                case 0:
+                    paint.setColor(Color.YELLOW);
+                    break;
+                case 1:
+                    paint.setColor(Color.GREEN);
+                    break;
+                case 2:
+                    paint.setColor(Color.RED);
+                    break;
+            }
+            paint.setStrokeWidth(2);
+            for (int i = 0; i < ndata - 1; i++) {
+                int j = (idx + i) % ndata;
+                int x1 = x0 + dw * i;
+                int x2 = x0 + dw * (i + 1);
+                int y1 = (int) (y0 + dh * vs[k][j]);
+                int y2 = (int) (y0 + dh * vs[k][(j + 1) % ndata]);
+                canvas.drawLine(x1, y1, x2, y2, paint);
+            }
         }
     }
 
-    public void addData(float val, boolean invalidate) {
-        vs[idx] = val;
+    public void addData(float val1, float val2, float val3, boolean invalidate) {
+        vs[0][idx] = val1;
+        vs[1][idx] = val2;
+        vs[2][idx] = val3;
+
         idx = (idx + 1) % ndata;
         if (invalidate)
             invalidate();
